@@ -55,11 +55,12 @@ func (h *ImageHandler) GetFilePath(request gm.IRequest) (filePath *base.FilePath
 		return
 	}
 	maxStr, exists := ctx.GetQuery("max")
-	max, err := strconv.ParseInt(maxStr, 10, 16)
-	if err != nil {
-		return
-	}
 	if exists {
+		var max int64
+		max, err = strconv.ParseInt(maxStr, 10, 16)
+		if err != nil {
+			return
+		}
 		var file *os.File
 		file, err = os.Open(filePath.AbsPath)
 		if err != nil {
