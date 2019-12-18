@@ -15,7 +15,7 @@ type IHandler interface {
 	GetFilePath(request gm.IRequest) (filePath *base.FilePath, err error)
 	GetFilePathWithParams(mediaType *string, relativeDirPath, fileName string) (filePath *base.FilePath, err error)
 	GetFile(request gm.IRequest) (fileName string, file *os.File, err error)
-	SaveFile(file, destinationFile *os.File, destination *base.FilePath) (err error)
+	SaveFile(file io.ReadSeeker, destinationFile *os.File, destination *base.FilePath) (fileInfo base.IFileInfo, err error)
 }
 
 var CurrentHandlers map[string]IHandler

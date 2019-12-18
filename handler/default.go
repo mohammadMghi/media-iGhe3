@@ -35,22 +35,33 @@ func (h *DefaultHandler) EnsurePath(path *base.FilePath) (err error) {
 	return
 }
 
-func (h *DefaultHandler) SaveFile(file, destinationFile *os.File, destination *base.FilePath) (err error) {
+func (h *DefaultHandler) SaveFile(reader io.ReadSeeker, destinationFile *os.File,
+	destination *base.FilePath) (fileInfo base.IFileInfo, err error) {
+	_, err = reader.Seek(0, os.SEEK_SET)
+	if err != nil {
+		return
+	}
 	err = h.EnsurePath(destination)
 	if err != nil {
 		return
 	}
 	if destinationFile == nil {
-		destinationFile, err := os.Create(destination.AbsPath)
+		destinationFile, err = os.Create(destination.AbsPath)
 		if err != nil {
-			return err
+			return
 		}
 		defer func() {
-			err = destinationFile.Close()
+			e := destinationFile.Close()
+			if e != nil {
+				err = e
+			}
 		}()
 	}
-	_, err = io.Copy(destinationFile, file)
-	return err
+	_, err = io.Copy(destinationFile, reader)
+	fileInfo = &base.FileInfo{
+		RelativeURL: destination.RelativePath,
+	}
+	return
 }
 
 func (h *DefaultHandler) GetMediaType() (mediaType *base.MediaType) {

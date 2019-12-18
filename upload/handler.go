@@ -14,7 +14,7 @@ import (
 
 type IHandler interface {
 	Initialize(handler IHandler)
-	Upload(request gm.IRequest) (relativePath string, err error)
+	Upload(request gm.IRequest) (fileInfo base.IFileInfo, err error)
 }
 
 type DefaultHandler struct {
@@ -25,7 +25,7 @@ func (h *DefaultHandler) Initialize(handler IHandler) {
 	h.IHandler = handler
 }
 
-func (h *DefaultHandler) Upload(request gm.IRequest) (relativePath string, err error) {
+func (h *DefaultHandler) Upload(request gm.IRequest) (fileInfo base.IFileInfo, err error) {
 	ctx := request.GetContext()
 	file, err := ctx.FormFile("file")
 	if err != nil {
@@ -37,6 +37,9 @@ func (h *DefaultHandler) Upload(request gm.IRequest) (relativePath string, err e
 	if err != nil {
 		return
 	}
+	defer func() {
+		err = f.Close()
+	}()
 	if _, err = io.Copy(hash, f); err != nil {
 		return
 	}
@@ -71,10 +74,13 @@ func (h *DefaultHandler) Upload(request gm.IRequest) (relativePath string, err e
 			finalFileName = fmt.Sprintf("%v_%v", name, fileNumber)
 		}
 	}
-	err = ctx.SaveUploadedFile(file, finalFilePath)
+	destinationPath, err := fileHandler.GetFilePathWithParams(nil, dirRelativePath, finalFileName)
 	if err != nil {
 		return
 	}
-	relativePath = path.Join(dirRelativePath, finalFileName)
+	fileInfo, err = fileHandler.SaveFile(f, nil, destinationPath)
+	if err != nil {
+		return
+	}
 	return
 }

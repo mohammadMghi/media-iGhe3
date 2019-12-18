@@ -11,10 +11,10 @@ type uploadController struct {
 
 func (c *uploadController) Post(request gm.IRequest) (result interface{}) {
 	ctx := request.GetContext()
-	downloadRelativeURL, err := CurrentConfig.Handler.Upload(request)
+	fileInfo, err := CurrentConfig.Handler.Upload(request)
 	if c.HandleErrorNoResult(request, err) {
 		return
 	}
-	ctx.String(200, downloadRelativeURL)
+	ctx.JSON(201, fileInfo)
 	return
 }

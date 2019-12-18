@@ -7,8 +7,11 @@ import (
 	gm "github.com/go-ginger/models"
 	"github.com/nfnt/resize"
 	"image"
+	_ "image/gif"
 	"image/jpeg"
 	_ "image/jpeg"
+	_ "image/png"
+	"io"
 	"math"
 	"os"
 	"path"
@@ -18,6 +21,31 @@ import (
 
 type ImageHandler struct {
 	DefaultHandler
+}
+
+func (h *ImageHandler) SaveFile(file io.ReadSeeker, destinationFile *os.File,
+	destination *base.FilePath) (fileInfo base.IFileInfo, err error) {
+	fileInfo, err = h.DefaultHandler.SaveFile(file, destinationFile, destination)
+	if err != nil {
+		return
+	}
+	var savedFile *os.File
+	savedFile, err = os.Open(destination.AbsPath)
+	if err != nil {
+		return
+	}
+	defer func() {
+		err = savedFile.Close()
+	}()
+	var imageConf image.Config
+	imageConf, _, err = image.DecodeConfig(savedFile)
+	if err != nil {
+		return
+	}
+	uploadedFileInfo := fileInfo.(*base.FileInfo)
+	uploadedFileInfo.Width = &imageConf.Width
+	uploadedFileInfo.Height = &imageConf.Height
+	return
 }
 
 func (h *ImageHandler) GetFilePath(request gm.IRequest) (filePath *base.FilePath, err error) {
@@ -61,7 +89,7 @@ func (h *ImageHandler) GetFilePath(request gm.IRequest) (filePath *base.FilePath
 		)
 		filePath.Extension = filepath.Ext(filePath.FullName)
 		filePath.Name = filePath.FullName[:len(filePath.FullName)-len(filePath.Extension)]
-		newFileFullName := fmt.Sprintf("%s_%dx%d%v", filePath.Name, newWidth, newHeight, filePath.Extension)
+		newFileFullName := fmt.Sprintf("%s_%dx%d%s", filePath.Name, newWidth, newHeight, filePath.Extension)
 		var newFilePath *base.FilePath
 		newFilePath, err = h.IHandler.GetFilePathWithParams(nil, newRelativePath, newFileFullName)
 		if err != nil {
@@ -96,7 +124,7 @@ func (h *ImageHandler) GetFilePath(request gm.IRequest) (filePath *base.FilePath
 		if err != nil {
 			return
 		}
-		err = h.IHandler.SaveFile(file, destinationFile, newFilePath)
+		_, err = h.IHandler.SaveFile(file, destinationFile, newFilePath)
 		if err != nil {
 			return
 		}
