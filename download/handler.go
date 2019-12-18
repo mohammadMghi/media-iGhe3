@@ -2,48 +2,48 @@ package download
 
 import (
 	"fmt"
-	"github.com/go-ginger/media/base"
+	"github.com/go-ginger/media/handler"
 	gm "github.com/go-ginger/models"
+	"github.com/go-ginger/models/errors"
 	"io"
 	"net/http"
 	"os"
-	"path"
 )
 
 type IHandler interface {
 	Initialize(handler IHandler)
 	Download(request gm.IRequest) (err error)
+	GetFile(request gm.IRequest) (fileName string, file *os.File, err error)
 }
 
 type DefaultHandler struct {
 	IHandler
 }
 
-func (h *DefaultHandler) Initialize(handler IHandler) {
-	h.IHandler = handler
+func (h *DefaultHandler) Initialize(iHandler IHandler) {
+	h.IHandler = iHandler
+}
+
+func (h *DefaultHandler) GetFile(request gm.IRequest) (fileName string, file *os.File, err error) {
+	req := request.GetBaseRequest()
+	mediaType, _ := req.Params.Get("media_type")
+	currentHandler, ok := handler.GetHandlerByKey(mediaType)
+	if !ok {
+		err = errors.GetValidationError("media handler for this media type not found")
+		return
+	}
+	return currentHandler.GetFile(request)
 }
 
 func (h *DefaultHandler) Download(request gm.IRequest) (err error) {
-	req := request.GetBaseRequest()
-	relativePath := ""
-	fileName := ""
-	for _, param := range []string{"media_type", "p1", "p2", "p3", "p4", "p5"} {
-		if paramValue, exists := req.Params.Get(param); exists {
-			relativePath = path.Join(relativePath, paramValue)
-			fileName = paramValue
-		} else {
-			break
-		}
-	}
-	fullPath := path.Join(base.CurrentConfig.MediaDirectoryPath, relativePath)
-	ctx := request.GetContext()
-	file, err := os.Open(fullPath)
+	fileName, file, err := h.GetFile(request)
 	if err != nil {
 		return
 	}
 	defer func() {
 		err = file.Close()
 	}()
+	ctx := request.GetContext()
 	if CurrentConfig.DownloadAsAttachment {
 		ctx.Writer.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%v", fileName))
 		ctx.Writer.Header().Set("Content-Type", ctx.Request.Header.Get("Content-Type"))

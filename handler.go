@@ -1,16 +1,22 @@
 package media
 
 import (
+	g "github.com/go-ginger/ginger"
 	"github.com/go-ginger/media/base"
 	"github.com/go-ginger/media/download"
+	"github.com/go-ginger/media/handler"
 	"github.com/go-ginger/media/upload"
 )
 
-type Handler struct {
+type Media struct {
 	config *Config
+
+	AuthRouters []*g.RouterGroup
+	Router      *g.RouterGroup
+	Handlers    map[string]handler.IHandler
 }
 
-func (h *Handler) Initialize(config *Config, baseConfig interface{}) (err error) {
+func (m *Media) Initialize(config *Config, baseConfig interface{}) (err error) {
 	base.Initialize(&config.Config)
 	if config.Upload == nil {
 		config.Upload = new(upload.Config)
@@ -18,7 +24,34 @@ func (h *Handler) Initialize(config *Config, baseConfig interface{}) (err error)
 	if config.Download == nil {
 		config.Download = new(download.Config)
 	}
-	upload.Initialize(config.Router, config.Upload)
-	download.Initialize(config.Router, config.Download)
+	if m.Handlers == nil {
+		imageHandler := handler.ImageHandler{}
+		imageHandler.MediaType = &base.MediaType{
+			Type:            "image",
+			RelativeDirPath: config.ImageDirectoryRelativePath,
+		}
+		imageHandler.Initialize(&imageHandler)
+		m.Handlers = map[string]handler.IHandler{}
+		imageHandlerKeys := []string{
+			"images",
+			"image/jpeg",
+			"image/png",
+			"image/gif",
+			"image/bmp",
+			"image/webp",
+			"image/vnd.microsoft.icon",
+		}
+		for _, imageHandlerKey := range imageHandlerKeys {
+			m.Handlers[imageHandlerKey] = &imageHandler
+		}
+	}
+	if _, ok := m.Handlers["default"]; !ok {
+		defaultHandler := handler.DefaultHandler{}
+		defaultHandler.Initialize(&defaultHandler)
+		m.Handlers["default"] = &defaultHandler
+	}
+	handler.CurrentHandlers = m.Handlers
+	upload.Initialize(m.Router, config.Upload)
+	download.Initialize(m.Router, config.Download)
 	return
 }

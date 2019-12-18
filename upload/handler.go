@@ -4,12 +4,12 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"github.com/go-ginger/media/base"
+	"github.com/go-ginger/media/handler"
 	gm "github.com/go-ginger/models"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 )
 
 type IHandler interface {
@@ -41,7 +41,12 @@ func (h *DefaultHandler) Upload(request gm.IRequest) (relativePath string, err e
 		return
 	}
 	sum := fmt.Sprintf("%x", hash.Sum(nil))
-	dirRelativePath := path.Join(base.CurrentConfig.ImageDirectoryRelativePath, sum[:2], sum[2:4])
+	fileHandler, err := handler.GetFileHandler(f)
+	if err != nil {
+		return
+	}
+	mediaType := fileHandler.GetMediaType()
+	dirRelativePath := path.Join(mediaType.RelativeDirPath, sum[:2], sum[2:4])
 	absDirPath := path.Join(base.CurrentConfig.MediaDirectoryPath, dirRelativePath)
 	if _, err = os.Stat(absDirPath); os.IsNotExist(err) {
 		err = os.MkdirAll(absDirPath, os.ModePerm)
@@ -58,12 +63,10 @@ func (h *DefaultHandler) Upload(request gm.IRequest) (relativePath string, err e
 			break
 		}
 		fileNumber++
-		name := filename
-		parts := strings.Split(filename, ".")
-		if len(parts) > 0 {
-			extension := parts[len(parts)-1]
-			name = filename[:len(filename)-len(extension)-1]
-			finalFileName = fmt.Sprintf("%v_%v.%v", name, fileNumber, extension)
+		ext := filepath.Ext(filename)
+		name := filename[:len(filename)-len(ext)]
+		if ext != "" {
+			finalFileName = fmt.Sprintf("%v_%v%v", name, fileNumber, ext)
 		} else {
 			finalFileName = fmt.Sprintf("%v_%v", name, fileNumber)
 		}
