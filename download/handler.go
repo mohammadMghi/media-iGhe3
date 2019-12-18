@@ -2,6 +2,7 @@ package download
 
 import (
 	"fmt"
+	mb "github.com/go-ginger/media/base"
 	"github.com/go-ginger/media/handler"
 	gm "github.com/go-ginger/models"
 	"github.com/go-ginger/models/errors"
@@ -13,7 +14,7 @@ import (
 type IHandler interface {
 	Initialize(handler IHandler)
 	Download(request gm.IRequest) (err error)
-	GetFile(request gm.IRequest) (fileName string, file *os.File, err error)
+	GetFile(request gm.IRequest) (filePath *mb.FilePath, file *os.File, err error)
 }
 
 type DefaultHandler struct {
@@ -24,7 +25,7 @@ func (h *DefaultHandler) Initialize(iHandler IHandler) {
 	h.IHandler = iHandler
 }
 
-func (h *DefaultHandler) GetFile(request gm.IRequest) (fileName string, file *os.File, err error) {
+func (h *DefaultHandler) GetFile(request gm.IRequest) (filePath *mb.FilePath, file *os.File, err error) {
 	req := request.GetBaseRequest()
 	mediaType, _ := req.Params.Get("media_type")
 	currentHandler, ok := handler.GetHandlerByKey(mediaType)
@@ -36,7 +37,7 @@ func (h *DefaultHandler) GetFile(request gm.IRequest) (fileName string, file *os
 }
 
 func (h *DefaultHandler) Download(request gm.IRequest) (err error) {
-	fileName, file, err := h.GetFile(request)
+	filePath, file, err := h.GetFile(request)
 	if err != nil {
 		return
 	}
@@ -45,7 +46,8 @@ func (h *DefaultHandler) Download(request gm.IRequest) (err error) {
 	}()
 	ctx := request.GetContext()
 	if CurrentConfig.DownloadAsAttachment {
-		ctx.Writer.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%v", fileName))
+		ctx.Writer.Header().Set("Content-Disposition",
+			fmt.Sprintf("attachment; filename=%v", filePath.FullName))
 		ctx.Writer.Header().Set("Content-Type", ctx.Request.Header.Get("Content-Type"))
 		_, err = io.Copy(ctx.Writer, file)
 		if err != nil {
@@ -57,6 +59,6 @@ func (h *DefaultHandler) Download(request gm.IRequest) (err error) {
 	if err != nil {
 		return err
 	}
-	http.ServeContent(ctx.Writer, ctx.Request, fileName, fileInfo.ModTime(), file)
+	http.ServeContent(ctx.Writer, ctx.Request, filePath.FullName, fileInfo.ModTime(), file)
 	return
 }

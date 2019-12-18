@@ -37,7 +37,7 @@ func (h *DefaultHandler) EnsurePath(path *base.FilePath) (err error) {
 
 func (h *DefaultHandler) SaveFile(reader io.ReadSeeker, destinationFile *os.File,
 	destination *base.FilePath) (fileInfo base.IFileInfo, err error) {
-	_, err = reader.Seek(0, os.SEEK_SET)
+	_, err = reader.Seek(0, io.SeekStart)
 	if err != nil {
 		return
 	}
@@ -104,8 +104,8 @@ func (h *DefaultHandler) GetFilePath(request gm.IRequest) (filePath *base.FilePa
 	return
 }
 
-func (h *DefaultHandler) GetFile(request gm.IRequest) (fileName string, file *os.File, err error) {
-	filePath, err := h.IHandler.GetFilePath(request)
+func (h *DefaultHandler) GetFile(request gm.IRequest) (filePath *base.FilePath, file *os.File, err error) {
+	filePath, err = h.IHandler.GetFilePath(request)
 	if err != nil {
 		return
 	}

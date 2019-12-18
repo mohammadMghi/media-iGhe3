@@ -13,6 +13,7 @@ type Config struct {
 	FileDirectoryPath          string
 	ImageDirectoryRelativePath string
 	ImageDirectoryPath         string
+	ImageMaxSize               int64
 }
 
 var CurrentConfig *Config
