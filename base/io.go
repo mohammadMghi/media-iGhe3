@@ -23,9 +23,8 @@ func (rws *ReadWriterSeeker) InitializeWriter() {
 	if rws.buf == nil {
 		rws.buf = make([]byte, 0)
 	}
-	rws.Writer = bufio.NewWriter(rws)
 	var b bytes.Buffer
-	rws.ByteWriter = bufio.NewWriter(&b)
+	rws.Writer = bufio.NewWriter(&b)
 }
 
 func (rws *ReadWriterSeeker) WriteTo(w io.Writer) (n int64, err error) {
@@ -77,8 +76,15 @@ func (rws *ReadWriterSeeker) Write(p []byte) (n int, err error) {
 }
 
 func (rws *ReadWriterSeeker) WriteByte(c byte) error {
-	err := rws.ByteWriter.WriteByte(c)
-	return err
+	minCap := rws.n + 1
+	if minCap > cap(rws.buf) {
+		buf2 := make([]byte, len(rws.buf), minCap+1)
+		copy(buf2, rws.buf)
+		rws.buf = buf2
+	}
+	rws.buf = append(rws.buf, c)
+	rws.n += 1
+	return nil
 }
 
 func (rws *ReadWriterSeeker) Seek(offset int64, whence int) (int64, error) {

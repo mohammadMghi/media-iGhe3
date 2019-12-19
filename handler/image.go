@@ -19,8 +19,13 @@ import (
 	"strconv"
 )
 
+type IImageHandler interface {
+	EnsureImageMaxSize(file io.ReadSeeker, max int) (out io.ReadSeeker, width, height uint, err error)
+}
+
 type ImageHandler struct {
 	DefaultHandler
+	IImageHandler
 }
 
 func (h *ImageHandler) Initialize(handler IHandler) {
@@ -36,7 +41,7 @@ func (h *ImageHandler) EnsureImageMaxSize(file io.ReadSeeker, max int) (out io.R
 		var lastSize int
 		for _, size := range base.CurrentConfig.ImageMaxSizes {
 			lastSize = size
-			if lastSize > max {
+			if lastSize >= max {
 				break
 			}
 		}
@@ -110,7 +115,7 @@ func (h *ImageHandler) SaveFile(file io.ReadSeeker, destinationFile *os.File,
 
 func (h *ImageHandler) GetFilePath(request gm.IRequest) (filePath *base.FilePath, err error) {
 	ctx := request.GetContext()
-	filePath, err = h.IHandler.GetFilePath(request)
+	filePath, err = h.DefaultHandler.GetFilePath(request)
 	if err != nil {
 		return
 	}

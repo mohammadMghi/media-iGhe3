@@ -78,7 +78,14 @@ func (h *DefaultHandler) Upload(request gm.IRequest) (fileInfo base.IFileInfo, e
 	if err != nil {
 		return
 	}
-	fileInfo, err = fileHandler.SaveFile(f, nil, destinationPath)
+	reader, _ := f.(io.ReadSeeker)
+	if imgHandler, ok := fileHandler.(handler.IImageHandler); ok {
+		reader, _, _, err = imgHandler.EnsureImageMaxSize(f, base.CurrentConfig.ImageMaxSize)
+		if err != nil {
+			return
+		}
+	}
+	fileInfo, err = fileHandler.SaveFile(reader, nil, destinationPath)
 	if err != nil {
 		return
 	}
