@@ -15,6 +15,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strconv"
 )
 
@@ -22,8 +23,25 @@ type ImageHandler struct {
 	DefaultHandler
 }
 
-func (h *ImageHandler) EnsureImageMaxSize(file io.ReadSeeker, max int64) (out io.ReadSeeker,
+func (h *ImageHandler) Initialize(handler IHandler) {
+	if base.CurrentConfig.ImageMaxSizes != nil {
+		sort.Ints(base.CurrentConfig.ImageMaxSizes)
+	}
+	h.DefaultHandler.Initialize(handler)
+}
+
+func (h *ImageHandler) EnsureImageMaxSize(file io.ReadSeeker, max int) (out io.ReadSeeker,
 	width, height uint, err error) {
+	if base.CurrentConfig.ImageMaxSizes != nil {
+		var lastSize int
+		for _, size := range base.CurrentConfig.ImageMaxSizes {
+			lastSize = size
+			if lastSize > max {
+				break
+			}
+		}
+		max = lastSize
+	}
 	_, err = file.Seek(0, io.SeekStart)
 	if err != nil {
 		return
