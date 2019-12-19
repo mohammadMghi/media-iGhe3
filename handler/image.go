@@ -163,7 +163,7 @@ func (h *ImageHandler) GetFilePath(request gm.IRequest) (filePath *base.FilePath
 			filePath = newFilePath
 			return
 		}
-		reader, newWidth, newHeight, e := h.EnsureImageMaxSize(file, max)
+		reader, newWidth, newHeight, e := h.EnsureImageMaxSize(file, int(max))
 		if e != nil {
 			err = e
 			return
