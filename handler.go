@@ -2,10 +2,10 @@ package media
 
 import (
 	g "github.com/go-ginger/ginger"
-	"github.com/go-ginger/media/base"
-	"github.com/go-ginger/media/download"
-	"github.com/go-ginger/media/handler"
-	"github.com/go-ginger/media/upload"
+	"github.com/go-m/media/base"
+	"github.com/go-m/media/download"
+	"github.com/go-m/media/handler"
+	"github.com/go-m/media/upload"
 )
 
 type Media struct {

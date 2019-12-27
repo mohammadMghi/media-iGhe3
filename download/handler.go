@@ -2,8 +2,8 @@ package download
 
 import (
 	"fmt"
-	mb "github.com/go-ginger/media/base"
-	"github.com/go-ginger/media/handler"
+	mb "github.com/go-m/media/base"
+	"github.com/go-m/media/handler"
 	gm "github.com/go-ginger/models"
 	"github.com/go-ginger/models/errors"
 	"io"

@@ -3,8 +3,8 @@ package upload
 import (
 	"crypto/sha256"
 	"fmt"
-	"github.com/go-ginger/media/base"
-	"github.com/go-ginger/media/handler"
+	"github.com/go-m/media/base"
+	"github.com/go-m/media/handler"
 	gm "github.com/go-ginger/models"
 	"io"
 	"os"

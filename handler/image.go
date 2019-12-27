@@ -2,7 +2,7 @@ package handler
 
 import (
 	"fmt"
-	"github.com/go-ginger/media/base"
+	"github.com/go-m/media/base"
 	gm "github.com/go-ginger/models"
 	"github.com/nfnt/resize"
 	"image"

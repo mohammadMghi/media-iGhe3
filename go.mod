@@ -1,4 +1,4 @@
-module github.com/go-ginger/media
+module github.com/go-m/media
 
 go 1.12
 
