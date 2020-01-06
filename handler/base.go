@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"github.com/go-m/media/base"
 	gm "github.com/go-ginger/models"
+	"github.com/go-m/media/base"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -20,8 +20,11 @@ type IHandler interface {
 
 var CurrentHandlers map[string]IHandler
 
-func GetHandlerByKey(key string) (handler IHandler, ok bool) {
-	handler, ok = CurrentHandlers[key]
+func GetHandlerByKey(key string) (handler IHandler) {
+	handler, ok := CurrentHandlers[key]
+	if !ok {
+		handler, _ = CurrentHandlers["default"]
+	}
 	return
 }
 
@@ -36,9 +39,6 @@ func GetFileHandler(file multipart.File) (fileHandler IHandler, err error) {
 		return
 	}
 	contentType := http.DetectContentType(buffer)
-	fileHandler, ok := GetHandlerByKey(contentType)
-	if !ok {
-		fileHandler, _ = GetHandlerByKey("default")
-	}
+	fileHandler = GetHandlerByKey(contentType)
 	return
 }
