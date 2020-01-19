@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"github.com/go-m/media/base"
 	gm "github.com/go-ginger/models"
 	"github.com/go-ginger/models/errors"
+	"github.com/go-m/media/base"
 	"io"
 	"os"
 	"path"
@@ -110,7 +110,7 @@ func (h *DefaultHandler) GetFile(request gm.IRequest) (filePath *base.FilePath, 
 		return
 	}
 	if _, err = os.Stat(filePath.AbsPath); os.IsNotExist(err) {
-		err = errors.GetNotFoundError()
+		err = errors.GetNotFoundError(request)
 		return
 	}
 	file, err = os.Open(filePath.AbsPath)

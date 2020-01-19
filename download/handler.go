@@ -2,10 +2,11 @@ package download
 
 import (
 	"fmt"
-	mb "github.com/go-m/media/base"
-	"github.com/go-m/media/handler"
 	gm "github.com/go-ginger/models"
 	"github.com/go-ginger/models/errors"
+	mb "github.com/go-m/media/base"
+	"github.com/go-m/media/handler"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"io"
 	"net/http"
 	"os"
@@ -30,7 +31,12 @@ func (h *DefaultHandler) GetFile(request gm.IRequest) (filePath *mb.FilePath, fi
 	mediaType, _ := req.Params.Get("media_type")
 	currentHandler, ok := handler.GetHandlerByKey(mediaType)
 	if !ok {
-		err = errors.GetValidationError("media handler for this media type not found")
+		err = errors.GetValidationError(request, request.MustLocalize(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "MediaHandlerNotFound",
+				Other: "media handler for this media type not found",
+			},
+		}))
 		return
 	}
 	return currentHandler.GetFile(request)
