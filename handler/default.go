@@ -4,6 +4,7 @@ import (
 	gm "github.com/go-ginger/models"
 	"github.com/go-ginger/models/errors"
 	"github.com/go-m/media/base"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"io"
 	"os"
 	"path"
@@ -107,6 +108,16 @@ func (h *DefaultHandler) GetFilePath(request gm.IRequest) (filePath *base.FilePa
 func (h *DefaultHandler) GetFile(request gm.IRequest) (filePath *base.FilePath, file *os.File, err error) {
 	filePath, err = h.IHandler.GetFilePath(request)
 	if err != nil {
+		if os.IsNotExist(err) {
+			err = errors.GetNotFoundError(request,
+				request.MustLocalize(&i18n.LocalizeConfig{
+					DefaultMessage: &i18n.Message{
+						ID:    "FileNotFoundError",
+						Other: "requested file not found",
+					},
+				}))
+			return
+		}
 		return
 	}
 	if _, err = os.Stat(filePath.AbsPath); os.IsNotExist(err) {
