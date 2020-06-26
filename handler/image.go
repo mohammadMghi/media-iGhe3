@@ -2,8 +2,8 @@ package handler
 
 import (
 	"fmt"
-	"github.com/go-m/media/base"
 	gm "github.com/go-ginger/models"
+	"github.com/go-m/media/base"
 	"github.com/nfnt/resize"
 	"image"
 	_ "image/gif"
@@ -24,7 +24,7 @@ type IImageHandler interface {
 }
 
 type ImageHandler struct {
-	DefaultHandler
+	IHandler
 	IImageHandler
 }
 
@@ -32,7 +32,8 @@ func (h *ImageHandler) Initialize(handler IHandler) {
 	if base.CurrentConfig.ImageMaxSizes != nil {
 		sort.Ints(base.CurrentConfig.ImageMaxSizes)
 	}
-	h.DefaultHandler.Initialize(handler)
+	h.IHandler = new(DefaultHandler)
+	h.IHandler.Initialize(handler)
 }
 
 func (h *ImageHandler) EnsureImageMaxSize(file io.ReadSeeker, max int) (out io.ReadSeeker,
@@ -90,7 +91,11 @@ func (h *ImageHandler) EnsureImageMaxSize(file io.ReadSeeker, max int) (out io.R
 
 func (h *ImageHandler) SaveFile(file io.ReadSeeker, destinationFile *os.File,
 	destination *base.FilePath) (fileInfo base.IFileInfo, err error) {
-	fileInfo, err = h.DefaultHandler.SaveFile(file, destinationFile, destination)
+	file, _, _, err = h.EnsureImageMaxSize(destinationFile, base.CurrentConfig.ImageMaxSize)
+	if err != nil {
+		return
+	}
+	fileInfo, err = h.IHandler.SaveFile(file, destinationFile, destination)
 	if err != nil {
 		return
 	}
@@ -115,7 +120,7 @@ func (h *ImageHandler) SaveFile(file io.ReadSeeker, destinationFile *os.File,
 
 func (h *ImageHandler) GetFilePath(request gm.IRequest) (filePath *base.FilePath, err error) {
 	ctx := request.GetContext()
-	filePath, err = h.DefaultHandler.GetFilePath(request)
+	filePath, err = h.IHandler.GetFilePath(request)
 	if err != nil {
 		return
 	}

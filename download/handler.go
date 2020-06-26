@@ -3,17 +3,13 @@ package download
 import (
 	"fmt"
 	gm "github.com/go-ginger/models"
-	mb "github.com/go-m/media/base"
 	"github.com/go-m/media/handler"
 	"io"
-	"net/http"
-	"os"
 )
 
 type IHandler interface {
 	Initialize(handler IHandler)
 	Download(request gm.IRequest) (err error)
-	GetFile(request gm.IRequest) (filePath *mb.FilePath, file *os.File, err error)
 }
 
 type DefaultHandler struct {
@@ -24,15 +20,11 @@ func (h *DefaultHandler) Initialize(iHandler IHandler) {
 	h.IHandler = iHandler
 }
 
-func (h *DefaultHandler) GetFile(request gm.IRequest) (filePath *mb.FilePath, file *os.File, err error) {
+func (h *DefaultHandler) Download(request gm.IRequest) (err error) {
 	req := request.GetBaseRequest()
 	mediaType, _ := req.Params.Get("media_type")
 	currentHandler := handler.GetHandlerByKey(mediaType)
-	return currentHandler.GetFile(request)
-}
-
-func (h *DefaultHandler) Download(request gm.IRequest) (err error) {
-	filePath, file, err := h.GetFile(request)
+	filePath, file, err := currentHandler.GetFile(request)
 	if err != nil {
 		return
 	}
@@ -50,10 +42,6 @@ func (h *DefaultHandler) Download(request gm.IRequest) (err error) {
 		}
 		return
 	}
-	fileInfo, err := file.Stat()
-	if err != nil {
-		return err
-	}
-	http.ServeContent(ctx.Writer, ctx.Request, filePath.FullName, fileInfo.ModTime(), file)
+	err = currentHandler.Download(request, file, filePath)
 	return
 }

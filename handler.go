@@ -48,10 +48,11 @@ func (m *Handler) InitializeHandlers(config *Config, handlers map[string]handler
 	}
 	// image handlers
 	imageHandler := handler.ImageHandler{}
-	imageHandler.MediaType = &base.MediaType{
+	imageHandler.Initialize(&imageHandler)
+	imageHandler.SetMediaType(&base.MediaType{
 		Type:            "image",
 		RelativeDirPath: config.ImageDirectoryRelativePath,
-	}
+	})
 	imageHandler.Initialize(&imageHandler)
 	imageHandlerKeys := []string{
 		config.ImageDirectoryRelativePath,

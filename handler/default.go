@@ -1,11 +1,15 @@
 package handler
 
 import (
+	"crypto/sha256"
+	"fmt"
 	gm "github.com/go-ginger/models"
 	"github.com/go-ginger/models/errors"
 	"github.com/go-m/media/base"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"io"
+	"mime/multipart"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -33,6 +37,11 @@ func (h *DefaultHandler) EnsurePath(path *base.FilePath) (err error) {
 			return
 		}
 	}
+	return
+}
+
+func (h *DefaultHandler) SetMediaType(mediaType *base.MediaType) {
+	h.MediaType = mediaType
 	return
 }
 
@@ -125,5 +134,80 @@ func (h *DefaultHandler) GetFile(request gm.IRequest) (filePath *base.FilePath, 
 		return
 	}
 	file, err = os.Open(filePath.AbsPath)
+	return
+}
+
+func (h *DefaultHandler) GetFileName(request gm.IRequest, fileHeader *multipart.FileHeader,
+	file multipart.File) (filename string, err error) {
+	filename = filepath.Base(fileHeader.Filename)
+	return
+}
+
+func (h *DefaultHandler) GetPath(request gm.IRequest, fileHeader *multipart.FileHeader,
+	file multipart.File) (destinationPath *base.FilePath, err error) {
+	mediaType := h.IHandler.GetMediaType()
+	hash := sha256.New()
+	if _, err = io.Copy(hash, file); err != nil {
+		return
+	}
+	sum := fmt.Sprintf("%x", hash.Sum(nil))
+	dirRelativePath := path.Join(mediaType.RelativeDirPath, sum[:2], sum[2:4])
+	absDirPath := path.Join(base.CurrentConfig.MediaDirectoryPath, dirRelativePath)
+	if _, err = os.Stat(absDirPath); os.IsNotExist(err) {
+		err = os.MkdirAll(absDirPath, os.ModePerm)
+		if err != nil {
+			return
+		}
+	}
+	filename, err := h.IHandler.GetFileName(request, fileHeader, file)
+	if err != nil {
+		return
+	}
+	finalFileName := filename
+	var finalFilePath string
+	fileNumber := 1
+	for {
+		finalFilePath = path.Join(absDirPath, finalFileName)
+		if _, err := os.Stat(finalFilePath); os.IsNotExist(err) {
+			break
+		}
+		fileNumber++
+		ext := filepath.Ext(filename)
+		name := filename[:len(filename)-len(ext)]
+		if ext != "" {
+			finalFileName = fmt.Sprintf("%v_%v%v", name, fileNumber, ext)
+		} else {
+			finalFileName = fmt.Sprintf("%v_%v", name, fileNumber)
+		}
+	}
+	destinationPath, err = h.IHandler.GetFilePathWithParams(nil, dirRelativePath, finalFileName)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (h *DefaultHandler) Upload(request gm.IRequest, fileHeader *multipart.FileHeader,
+	file multipart.File) (fileInfo base.IFileInfo, err error) {
+	destinationPath, err := h.IHandler.GetPath(request, fileHeader, file)
+	if err != nil {
+		return
+	}
+	reader, _ := file.(io.ReadSeeker)
+	fileInfo, err = h.IHandler.SaveFile(reader, nil, destinationPath)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (h *DefaultHandler) Download(request gm.IRequest, file *os.File, filePath *base.FilePath) (err error) {
+	ctx := request.GetContext()
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return err
+	}
+
+	http.ServeContent(ctx.Writer, ctx.Request, filePath.FullName, fileInfo.ModTime(), file)
 	return
 }
