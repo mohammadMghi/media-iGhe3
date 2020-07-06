@@ -47,8 +47,9 @@ func (m *Handler) InitializeHandlers(config *Config, handlers map[string]handler
 		m.Handlers = map[string]handler.IHandler{}
 	}
 	// image handlers
-	imageHandler := handler.ImageHandler{}
-	imageHandler.Initialize(&imageHandler)
+	imageHandler := handler.ImageHandler{
+		IHandler: new(handler.DefaultHandler),
+	}
 	imageHandler.SetMediaType(&base.MediaType{
 		Type:            "image",
 		RelativeDirPath: config.ImageDirectoryRelativePath,

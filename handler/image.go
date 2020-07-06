@@ -32,7 +32,6 @@ func (h *ImageHandler) Initialize(handler IHandler) {
 	if base.CurrentConfig.ImageMaxSizes != nil {
 		sort.Ints(base.CurrentConfig.ImageMaxSizes)
 	}
-	h.IHandler = new(DefaultHandler)
 	h.IHandler.Initialize(handler)
 }
 
@@ -91,7 +90,7 @@ func (h *ImageHandler) EnsureImageMaxSize(file io.ReadSeeker, max int) (out io.R
 
 func (h *ImageHandler) SaveFile(file io.ReadSeeker, destinationFile *os.File,
 	destination *base.FilePath) (fileInfo base.IFileInfo, err error) {
-	file, _, _, err = h.EnsureImageMaxSize(destinationFile, base.CurrentConfig.ImageMaxSize)
+	file, _, _, err = h.EnsureImageMaxSize(file, base.CurrentConfig.ImageMaxSize)
 	if err != nil {
 		return
 	}
