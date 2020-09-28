@@ -6,10 +6,13 @@ import (
 
 var CurrentConfig *Config
 
-func Initialize(router *g.RouterGroup, config *Config) {
+func Initialize(controller g.IController, router *g.RouterGroup, config *Config) {
 	CurrentConfig = config
 	CurrentConfig.Initialize()
 	CurrentConfig.Handler.Initialize(CurrentConfig.Handler)
-	download.Init(download, nil, nil)
+	if controller == nil {
+		controller = download
+	}
+	download.Init(controller, nil, nil)
 	RegisterRoutes(router)
 }

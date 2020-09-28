@@ -10,7 +10,8 @@ import (
 
 type IHandler interface {
 	GetBase() (handler *Handler)
-	Initialize(handler IHandler, config *Config, handlers map[string]handler.IHandler) (err error)
+	Initialize(uploadController g.IController, downloadController g.IController, handler IHandler,
+		config *Config, handlers map[string]handler.IHandler) (err error)
 	InitializeHandlers(config *Config, handlers map[string]handler.IHandler) (err error)
 }
 
@@ -27,7 +28,8 @@ func (m *Handler) GetBase() (handler *Handler) {
 	return m
 }
 
-func (m *Handler) Initialize(handler IHandler, config *Config, handlers map[string]handler.IHandler) (err error) {
+func (m *Handler) Initialize(uploadController g.IController, downloadController g.IController,
+	handler IHandler, config *Config, handlers map[string]handler.IHandler) (err error) {
 	m.IHandler = handler
 	base.Initialize(&config.Config)
 	if config.Upload == nil {
@@ -36,8 +38,8 @@ func (m *Handler) Initialize(handler IHandler, config *Config, handlers map[stri
 	if config.Download == nil {
 		config.Download = new(download.Config)
 	}
-	upload.Initialize(m.Router, config.Upload)
-	download.Initialize(m.Router, config.Download)
+	upload.Initialize(uploadController, m.Router, config.Upload)
+	download.Initialize(downloadController, m.Router, config.Download)
 	err = m.IHandler.InitializeHandlers(config, handlers)
 	return
 }
