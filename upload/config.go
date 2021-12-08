@@ -1,6 +1,6 @@
 package upload
 
-import ab "github.com/go-m/auth/base"
+import ab "github.com/mohammadMghi/go-auth-iGhe3/base"
 
 type Config struct {
 	LoginHandler ab.ILoginHandler
