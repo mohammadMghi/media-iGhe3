@@ -1,4 +1,4 @@
-module github.com/go-m/media
+module github.com/mohammadMghi/media-iGhe3
 
 go 1.12
 

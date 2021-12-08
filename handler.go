@@ -2,10 +2,10 @@ package media
 
 import (
 	g "github.com/go-ginger/ginger"
-	"github.com/go-m/media/base"
-	"github.com/go-m/media/download"
-	"github.com/go-m/media/handler"
-	"github.com/go-m/media/upload"
+	"github.com/mohammadMghi/media-iGhe3/base"
+	"github.com/mohammadMghi/media-iGhe3/download"
+	"github.com/mohammadMghi/media-iGhe3/handler"
+	"github.com/mohammadMghi/media-iGhe3/upload"
 )
 
 type IHandler interface {
